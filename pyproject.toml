@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "open-research-toolkit"
+version = "0.1.0"
+description = "Privacy-friendly CSV quality reports for reproducible research"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{name = "Open Research Toolkit contributors"}]
+[project.urls]
+Repository = "https://github.com/mbxqq/open-research-toolkit"
+Issues = "https://github.com/mbxqq/open-research-toolkit/issues"
+[project.scripts]
+ort-check = "open_research_toolkit.cli:main"
+[tool.setuptools.packages.find]
+where = ["src"]
