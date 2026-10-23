@@ -5,11 +5,16 @@ import json
 from collections import Counter
 from pathlib import Path
 
+from . import __version__
 
-def inspect_csv(path):
+
+def inspect_csv(path, *, delimiter=",", missing_values=()):
     """Return aggregate quality metrics; never return individual record values."""
+    if len(delimiter) != 1 or delimiter in "\r\n\0":
+        raise ValueError("Delimiter must be one character other than newline or NUL")
+    markers = {value.strip() for value in missing_values}
     with open(path, newline="", encoding="utf-8-sig") as handle:
-        reader = csv.reader(handle, strict=True)
+        reader = csv.reader(handle, strict=True, delimiter=delimiter)
         fields = next(reader, None)
         if not fields:
             raise ValueError("CSV must have a header row")
@@ -32,13 +37,18 @@ def inspect_csv(path):
                 duplicates += 1
             seen.add(values)
             for field, value in zip(fields, values):
-                if not value.strip():
+                if not value.strip() or value.strip() in markers:
                     missing[field] += 1
     return {"rows": count, "columns": len(fields), "missing_by_column": dict(missing), "duplicate_rows": duplicates}
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Inspect local CSV quality without uploading data")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument("--delimiter", default=",", help="Single field separator (default: comma)")
+    parser.add_argument("--missing-value", action="append", default=[], help="Additional missing marker; repeatable, case-sensitive, whitespace-trimmed")
+    parser.add_argument("--fail-on-missing", action="store_true", help="Exit 1 if any missing values are found")
+    parser.add_argument("--fail-on-duplicates", action="store_true", help="Exit 1 if duplicate records are found")
     parser.add_argument("csv_file", type=Path)
     parser.add_argument("--output", type=Path, help="Write aggregate report as JSON")
     args = parser.parse_args(argv)
@@ -48,12 +58,16 @@ def main(argv=None):
             or (args.output.exists() and args.output.samefile(args.csv_file))
         ):
             raise ValueError("Output must not overwrite the input CSV")
-        result = inspect_csv(args.csv_file)
+        result = inspect_csv(args.csv_file, delimiter=args.delimiter, missing_values=args.missing_value)
         report = json.dumps(result, indent=2)
         if args.output:
             args.output.write_text(report + "\n", encoding="utf-8")
         else:
             print(report)
+        if (args.fail_on_missing and any(result["missing_by_column"].values())) or (
+            args.fail_on_duplicates and result["duplicate_rows"] > 0
+        ):
+            parser.exit(1)
     except (OSError, UnicodeError, ValueError, csv.Error) as error:
         parser.exit(2, f"ort-check: error: {error}\n")
 

@@ -1,2 +1,3 @@
 include CHANGELOG.md CONTRIBUTING.md
 recursive-include examples *.csv
+include MAINTAINERS.md ROADMAP.md

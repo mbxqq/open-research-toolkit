@@ -47,6 +47,21 @@ The included data is synthetic. Expected report:
 }
 ```
 
+### Configurable checks (0.2.0)
+
+```bash
+ort-check data.csv --delimiter ';' --missing-value NA --missing-value null
+ort-check data.csv --fail-on-missing --fail-on-duplicates --output report.json
+ort-check --version
+```
+
+Missing markers are case-sensitive and compared after trimming whitespace; empty
+and whitespace-only fields always count as missing. Duplicate matching still uses
+original parsed strings. The JSON layout remains compatible with 0.1.0.
+
+Exit status 0 means the inspection completed and any requested quality checks passed.
+Status 1 means a requested quality check failed; the report is still written.
+Without quality flags, missing or duplicate values are reported without failing.
 Errors exit with status 2. The output cannot be the input CSV or a link to it.
 An existing report file is replaced when `--output` is used.
 
@@ -64,9 +79,9 @@ A configured workflow is not evidence that a remote run has passed.
 
 ## Limitations and privacy
 
-- Input must be comma-delimited UTF-8 CSV; a UTF-8 byte order mark is accepted.
+- Input must be UTF-8 CSV; delimiters can be configured; a UTF-8 byte order mark is accepted.
 - Completely blank lines are skipped; quoted multiline fields are supported.
-- Whitespace-only fields count as missing. `NA` and `null` remain literal values.
+- Whitespace-only fields count as missing. `NA` and `null` remain literal values unless configured with `--missing-value`.
 - Duplicate matching compares parsed strings exactly, without trimming whitespace.
 - Duplicate detection retains unique rows in memory; large datasets may need substantial memory.
 - Reports include column names, which can themselves be sensitive. Review reports before sharing.
@@ -74,12 +89,16 @@ A configured workflow is not evidence that a remote run has passed.
 
 ## Development status
 
-Version 0.1.0 is an initial implementation. No adoption, user counts, or external
-program eligibility are claimed. Future possibilities include configurable missing
-markers, schema checks, and additional report formats; these are not implemented.
+Version 0.2.0 is an initial implementation. No adoption, user counts, or external
+program eligibility are claimed. Future possibilities include schema checks and additional report formats; these are not implemented.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance.
 
 ## License
 
 [MIT](LICENSE). The existing copyright notice is retained.
+
+## Maintenance
+
+Maintainer and contribution process: [MAINTAINERS.md](MAINTAINERS.md).
+Planned work and acceptance criteria: [ROADMAP.md](ROADMAP.md).
